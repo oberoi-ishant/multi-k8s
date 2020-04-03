@@ -1,0 +1,40 @@
+sudo: required
+services:
+  - docker
+
+# specify build process to build the react app
+# you can also add similar command to build other part like server and worker
+# then use the builds to run the tests on them.
+# here we have tests only in react app.
+before_install:
+  - docker build -t ishantoberoi/client-react-test -f ./client/Dockerfile.dev ./client
+
+# here is  any script exits with status code other than 0
+# travis will assume build failed.
+# exit status 0 is ... everything OK and we want to exit.
+# exit status non-zero mean some error
+# Using the command with -e CI=true as there is some issue with jest
+# we do not get the exit status 0 after the run test is completed.
+script:
+  - docker run -e CI=true ishantoberoi/client-react-test npm run test
+
+after_success:
+  - docker build -t ishantoberoi/multi-client ./client
+  - docker build -t ishantoberoi/multi-server ./server
+  - docker build -t ishantoberoi/multi-worker ./worker
+  - docker build -t ishantoberoi/multi-nginx ./nginx
+
+# login to docker CLI
+# go to your repo on travis ci https://travis-ci.org/github/oberoi-ishant/multi-docker
+# settings - environment variables
+# create two DOCKER_ID and DOCKER_PASSWORD and add their values.
+# login with below command onto docker from travis ci
+# so echo will take your value from env variable and emit it to stdin with the | command
+# this is how we login to docker in a single command.
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+# Take the production images built above and push them to docker hub
+  - docker push ishantoberoi/multi-client
+  - docker push ishantoberoi/multi-server
+  - docker push ishantoberoi/multi-worker
+  - docker push ishantoberoi/multi-nginx
