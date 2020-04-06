@@ -50,6 +50,9 @@ after_success:
 # env -> app env name (DockerReactPractice-env)
 # bucket_name -> aws - serives - s3 - name for your region elasticbeanstalk-us-east-2
 # bucket_path: your app name in the bucket
+
+# Now elasticBeanstalk will pick up all configuration from
+# Dockerrun.aws.json file and start deployment.
 deploy:
   provider: elasticbeanstalk
   region: "us-east-2"

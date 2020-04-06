@@ -123,12 +123,16 @@
 # so you dont have to add them in every service like we did in docker-compose
 # for api, worker etc.
 
-# IAM 
+# IAM
 # AWS -> services -> IAM
-# new user 
+# new user
 # name: multi-docker-deployer
 # permission: serach for ElasticBeanstalk and add all
 # create user.
 # Access key ID AKIAQTFGRWYJMXD66G7R
 # Secret Access Key: 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
 # check multi-docker-deployer-iam.csv
+
+# Add deploy steps to travis.yml
+# Here ElasticBeanstalk picks all Configuration from the
+# Dockerrun.aws.json file.
