@@ -13,6 +13,7 @@
 # essential:true in containerDefinitions.
 # Essential contianer means that is the most important one. If this
 # container crashes, then stop all other containers.
+# memory in Megabytes is the amount of memory ElasticBeanstalk should allocate to the container.
 # In out project, if nginx crashes users can not visit the site, so we make it essential: true.
 # For Amazon ECS task definition parameters link is
 # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#container_definitions
@@ -129,7 +130,13 @@
 # name: multi-docker-deployer
 # permission: serach for ElasticBeanstalk and add all
 # create user.
+# save credentials.
 
 # Add deploy steps to travis.yml
-# Here ElasticBeanstalk picks all Configuration from the
+# Add environment variables to your repo in travis cli.
+# add the environment variable for
+  - access_key_id: $AWS_ACCESS_KEY
+  -  secret_access_key: $AWS_SECRET_KEY
+
+# Now ElasticBeanstalk picks all Configuration from the
 # Dockerrun.aws.json file.
