@@ -38,3 +38,26 @@ after_success:
   - docker push ishantoberoi/multi-server
   - docker push ishantoberoi/multi-worker
   - docker push ishantoberoi/multi-nginx
+
+
+# app address http://mutlidocker-env.eba-6yudpi3u.us-east-2.elasticbeanstalk.com/
+# AWS_ACCESS_KEY and AWS_SECRET_KEY configured in travis as environement
+# variables https://travis-ci.org/github/oberoi-ishant/multi-docker/settings
+# for security reasons as our repository on github is public.
+# Below is how elasticbeanstalk page heading will look like on aws. From this:
+# All Applications  mutli-docker  MutliDocker-env  Environment ID: e-qicwbmdpig, URL: MutliDocker-env.eba-6yudpi3u.us-east-2.elasticbeanstalk.com
+# app -> app name (docker-react-practice)
+# env -> app env name (DockerReactPractice-env)
+# bucket_name -> aws - serives - s3 - name for your region elasticbeanstalk-us-east-2
+# bucket_path: your app name in the bucket
+deploy:
+  provider: elasticbeanstalk
+  region: "us-east-2"
+  app: multi-docker
+  env: MutliDocker-env
+  bucket_name: elasticbeanstalk-us-east-2-041151477266
+  bucket_path: multi-docker
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key: $AWS_SECRET_KEY
+  on:
+    branch: master

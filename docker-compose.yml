@@ -1,3 +1,4 @@
+# docker-compose is primarily run for development purpose.
 version: '3'
 services:
   postgres:
@@ -6,7 +7,10 @@ services:
       - POSTGRES_PASSWORD=postgres_password
   redis:
     image: 'redis:latest'
-  api: # using api as nginx default config has server as keyword.
+  # using api as nginx default config has server as keyword.
+  # also use the name "api" as hostname for server containerMapping in Dockerrun.aws.json, coz we added
+  # this name in nginx default.conf
+  api:
     build:
       dockerfile: Dockerfile.dev
       context: ./server
