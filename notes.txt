@@ -129,9 +129,6 @@
 # name: multi-docker-deployer
 # permission: serach for ElasticBeanstalk and add all
 # create user.
-# Access key ID AKIAQTFGRWYJMXD66G7R
-# Secret Access Key: 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
-# check multi-docker-deployer-iam.csv
 
 # Add deploy steps to travis.yml
 # Here ElasticBeanstalk picks all Configuration from the

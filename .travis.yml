@@ -54,6 +54,7 @@ after_success:
 # Now elasticBeanstalk will pick up all configuration from
 # Dockerrun.aws.json file and start deployment.
 deploy:
+  edge: true
   provider: elasticbeanstalk
   region: "us-east-2"
   app: multi-docker
