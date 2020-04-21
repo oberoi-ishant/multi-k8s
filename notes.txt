@@ -1,348 +1,92 @@
-# NOTES:
-# For Production.
-# https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/11437358#questions/9889368
-# Related to Dockerrun.aws.json file.
-# Image to check in folder: amazon-ecs-task-definition
-# So you will write a task definition file that will be
-# consumed by Amazon ECS. One task definition file has instruction
-# for ONLY one container.
-# So in Dockerrun.aws.json we write the task definition that is essntially
-# used by ECS. Elastic Beanstalk delegated the task to ECS to understand
-# mutli container deployment.
-# Also in Dockerrun.aws.json there should be atleast one container as
-# essential:true in containerDefinitions.
-# Essential contianer means that is the most important one. If this
-# container crashes, then stop all other containers.
-# memory in Megabytes is the amount of memory ElasticBeanstalk should allocate to the container.
-# In out project, if nginx crashes users can not visit the site, so we make it essential: true.
-# For Amazon ECS task definition parameters link is
-# https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#container_definitions
-# Like in docker-compose file we listed SERVICES by name and used these names
-# in code like http://client. We know SERVICES running
-# have a network and they can access each other using this name.
-# Similary we use the name as hostname key in Dockerrun.aws.json file.
-# hostname is optinal field though. Since no other services needs to
-# reach out to nginx in the Dockerrun.aws.json file we can omit
-# hostname in nginx container definition. No harm if it is there.
-# links property in Dockerrun.aws.json. For nginx to know that two such
-# CONTAINERS exist we specify link as the "name" property of the container for
-# containerMapping. This establishes a link for nginx to route traffice
-# between these containers. See image link-prop-dockerrun-aws.png
-
-# In Production, we did not mention anything about postgres and redis services
-# that we had in our application like in docker-compose.
-# Neither did we create their images on travisci.
-# Because we will use Amazon services out of the box of these.
-# Check images app-prod-structure-with-aws-services, aws-elastic-cache-for-redis
-# aws-elastic-cache-for-redis. We will use these service from aws.
-# Will AWS Elastic cache for redis
-# AWS Relational Database Service(RDS) for postgres.
-# For advantages see the images.
-
-
-# By default ElasticCache and RDS can't talk to beanstalk so we need to create
-# security groups.
-# Check images to understand the vpc - virtual private cloud and
-# security groups.
-# VPC is virtual cloud for every region on amazonaws like us-east-2.
-# Every region will have one default vpc. This ensures your containers
-# are available only to your account.
-# security group describe the firewall rules for these vpc.
-# they descibe rules for what different services or sources on internet can connect with
-# with what services running inside the vpc.
-# security group was create for you when you create the elastic Beanstalk
-# instance. Be sure your are in the region where you created the Beanstalk instance.
-# In the vpc page on left check security group and you should see One
-# with the name related to your beanstalk project.
-# check image. You can also see the rule for traffic inbound and outbond rule
-# displayed in the image security-group-example and security-group-def
-
-# So we also create one rule in security group saying
-# "Allow any traffic coming from any AWS service that has this security group"
-# Allow such traffic to pass through and let these services communicate.
-# And will attach this securitygroup to our serivces elastic beanstalk, redis(Elastic cache) and
-# postgres(AWS RDS). Image: new-security-rule-for-our-aws-services
-
-# Create RDS on aws services
-# https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/11437376#questions/9889368
-# free tier - postgres
-# AWS RDS: master username: postgres
-# master password: postgrespassword
-# DBinstance size: db.t2.micro (the free one by default)
-# Virtual Private Cloud: Default-vpc (where ElasticBeanstalk instance created)
-# public accessibility: no
-# vpc security group: create new for now.
-# Databasename: fibvalues
-# DB instance identifier: multi-docker-postgres
-# vpc security group name: multi-docker-vpcgroup
-
-# Create ElasticCache
-# https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/11437378#questions/9889368
-# AWS- Elastic Cache
-# Hit redis on left -> create
-# name: multi-docker-redis
-# Node type: t2 -> cache.t2.micro (cheapest)
-# Subnet group: name: redis-group.
-# choose default vpc for vpc id.
-# select the Subnet check boxes
-# created successfully.
-
-# Security Group Add Rule(firewall rules)
-# now select your securitygroup -> inbound rules -> edit -> add rule (Image: security-group-create)
-# port range can be zero but we will restrict to our ports of
-# postgres(5432) and redis(6379). So type 5432-6379
-# security groups: type the group id of the securitygroup just created. eg sg-020c7dcf7e67b3780 you can copy it from the description
-# of securitygroup created on the description tag.(previous tab)
-
-# Now apply securitygroup to ElasticCache and RDS and Beanstalk.
-# Go to ElasticCache - Redis - select your redis ins - multi-docker-redis
-# modify -> select the newly greate securitygroup.
-# go to RDS - your db instance multi-docker-postgres
-# modify -> select your securitygroup. Save
-# go to ElasticBeanstalk -> you instance -> Configuration -> instances
-# modify -> select your securitygroup. Apply/Confirm.
-
-# Setting environment vriables for containers running inside ElasticBeanstalk
-# to access RDS and ElasticCache.
-# ElasticBeanstalk ->configure -> software ->modify
-# Environment Properties
-# Use image RDS-Env-variable-endpoint-port and REDIS-Env-variable-endpoint-port
-# You need to basically get the endpoint and port from your running instances
-# of RDS and ElasticCache on the aws.
-# And use the postgres variables saved above user name password Database name.
-# Will add all the environment variables as specified on docker-compose file
-# for the api (server part).
-# - REDIS_HOST=endpoint(image)
-  - REDIS_PORT=port(image)
-  - PGUSER=postgres
-  - PGHOST=endpoint(image)
-  - PGDATABASE=fibvalues(from above when created)
-  - PGPASSWORD=postgrespassword (from above when created)
-  - PGPORT=port(image)
-# In ElasticBeanstalk when you list environment variables they automatically
-# pass down to every container listed in the Dockerrun.aws.json.
-# so you dont have to add them in every service like we did in docker-compose
-# for api, worker etc.
-
-# IAM
-# AWS -> services -> IAM
-# new user
-# name: multi-docker-deployer
-# permission: serach for ElasticBeanstalk and add all
-# create user.
-# save credentials.
-
-# Add deploy steps to travis.yml
-# Add environment variables to your repo in travis cli.
-# add the environment variable for
-  - access_key_id: $AWS_ACCESS_KEY
-  -  secret_access_key: $AWS_SECRET_KEY
-
-# Now ElasticBeanstalk picks all Configuration from the
-# Dockerrun.aws.json file.
-
-
-
-
-AWS Configuration Cheat Sheet
-This lecture note is not intended to be a replacement for the videos, but only to serve as a cheat sheet for students who want to quickly run thru the AWS configuration steps or easily see if they missed a step. Steps listed are accurate as of 7-11-2019, keep in mind that AWS makes frequent small changes to their UI.
-
-RDS Database Creation
-
-Go to AWS Management Console and use Find Services to search for RDS
-
-Click Create database button
-
-Select PostgreSQL
-
-Check 'only enable options eligible for RDS Free Usage Tier' and click Next button
-
-Scroll down to Settings Form
-
-Set DB Instance identifier to multi-docker-postgres
-
-Set Master Username to postgres
-
-Set Master Password to postgres and confirm
-
-Click Next button
-
-Make sure VPC is set to Default VPC
-
-Scroll down to Database Options
-
-Set Database Name to fibvalues
-
-Scroll down and click Create Database button
-
-ElastiCache Redis Creation
-
-Go to AWS Management Console and use Find Services to search for ElastiCache
-
-Click Redis in sidebar
-
-Click the Create button
-
-Make sure Redis is set as Cluster Engine
-
-In Redis Settings form, set Name to multi-docker-redis
-
-Change Node type to 'cache.t2.micro'
-
-Change Number of replicas to 0
-
-Scroll down to Advanced Redis Settings
-
-Subnet Group should say “Create New"
-
-Set Name to redis-group
-
-VPC should be set to default VPC
-
-Tick all subnet’s boxes
-
-Scroll down and click Create button
-
-Creating a Custom Security Group
-
-Go to AWS Management Console and use Find Services to search for VPC
-
-Click Security Groups in sidebar
-
-Click Create Security Group button
-
-Set Security group name to multi-docker
-
-Set Description to multi-docker
-
-Set VPC to default VPC
-
-Click Create Button
-
-Click Close
-
-Manually tick the empty field in the Name column of the new security group and type multi-docker, then click the checkmark icon.
-
-Scroll down and click Inbound Rules
-
-Click Edit Rules button
-
-Click Add Rule
-
-Set Port Range to 5432-6379
-
-Click in box next to Custom and start typing 'sg' into the box. Select the Security Group you just created, it should look similar to 'sg-…. | multi-docker’
-
-Click Save Rules button
-
-Click Close
-
-Applying Security Groups to ElastiCache
-
-Go to AWS Management Console and use Find Services to search for ElastiCache
-
-Click Redis in Sidebar
-
-Check box next to Redis cluster and click Modify
-
-Change VPC Security group to the multi-docker group and click Save
-
-Click Modify
-
-Applying Security Groups to RDS
-
-Go to AWS Management Console and use Find Services to search for RDS
-
-Click Databases in Sidebar and check box next to your instance
-
-Click Modify button
-
-Scroll down to Network and Security change Security group to multi-docker
-
-Scroll down and click Continue button
-
-Click Modify DB instance button
-
-Applying Security Groups to Elastic Beanstalk
-
-Go to AWS Management Console and use Find Services to search for Elastic Beanstalk
-
-Click the multi-docker application tile
-
-Click Configuration link in Sidebar
-
-Click Modify in Instances card
-
-Scroll down to EC2 Security Groups and tick box next to multi-docker
-
-Click Apply and Click Confirm
-
-Setting Environment Variables
-
-Go to AWS Management Console and use Find Services to search for Elastic Beanstalk
-
-Click the multi-docker application tile
-
-Click Configuration link in Sidebar
-
-Select Modify in the Software tile
-
-Scroll down to Environment properties
-
-In another tab Open up ElastiCache, click Redis and check the box next to your cluster. Find the Primary Endpoint and copy that value but omit the :6379
-
-Set REDIS_HOST key to the primary endpoint listed above, remember to omit :6379
-
-Set REDIS_PORT to 6379
-
-Set PGUSER to postgres
-
-Set PGPASSWORD to postgrespassword
-
-In another tab, open up RDS dashboard, click databases in sidebar, click your instance and scroll to Connectivity and Security. Copy the endpoint.
-
-Set the PGHOST key to the endpoint value listed above.
-
-Set PGDATABASE to fibvalues
-
-Set PGPORT to 5432
-
-Click Apply button
-
-IAM Keys for Deployment
-
-Go to AWS Management Console and use Find Services to search for IAM
-
-Click Users link in the Sidebar
-
-Click Add User button
-
-Set User name to multi-docker-deployer
-
-Set Access-type to Programmatic Access
-
-Click Next:Permissions button
-
-Select Attach existing polices directly button
-
-Search for 'beanstalk' and check all boxes
-
-Click Next:Review
-
-Add tag if you want and Click Next:Review
-
-Click Create User
-
-Copy Access key ID and secret access key for use later
-
-AWS Keys in Travis
-
-Open up Travis dashboard and find your multi-docker app
-
-Click More Options, and select Settings
-
-Scroll to Environment Variables
-
-Add AWS_ACCESS_KEY and set to your AWS access key
-
-Add AWS_SECRET_KEY and set to your AWS secret key
+This project relates to simplek8s folder.
+SAME PROJECT(comples_without_k8s) NOW WITH KUBERNETES
+IMAGE(path-to-production)
+We only need services (ClusterIP) only when there are requests
+going into a set of pods.
+# Since worker is not going to be accessed by any other Object,
+# we do not need any ClusterIP service or any port for worker.
+# We need ClusterIP service only when some other object/service needs
+# to access something inside the pod. Since there is nothing coming
+# in to worked to access anything we don't need ports or ClusterIP.
+# worker is accessing other service/pod (here redis) but none is
+# reaching into worker for anything.
+
+COMMAND TO CHECK LOGS
+- kubectl get pods ...
+  then get the pod-id
+- kubectl logs <pod-id>
+
+PVC - Persistent Volume Claim
+
+Volumes
+In generic terms: some type of mechanism that allows a container to access a file system outside itself.
+Like we used in docker run -v command.
+In k8s world: An object that allows a container to store data at the pod level.
+
+Image(k8s-volume, pvc-pv-volume)
+A kubernetes Volume is tied to the pod. It can survice container restarts.
+But if the pod gets killed entire data is also wiped out.
+
+Image(pvc-part-one, pvc-part-two)
+Persistent Volume: storage outside the pod. So it can survive pod crash. New pod can connect to it and carry on.
+Persistent Volume Claim (PVC) is like an advertisement. It is not a volume that exists.
+Statically Provisioned Persistent Volume: is the volumed that is provisioned ahead of time.
+Dynamically Provisioned Persistent Volume: is dynanically provisioned. It was not created until we asked for it.
+
+AccessModes: (Image: access-modes)
+ReadWriteOnce: can be used by a single node at a time.
+ReadOnlyMany: multiple nodes can read from it.
+ReadWriteMany: can be read and written to by many nodes.
+
+(Image: pvc-allocation*)
+Storage options to provision PVC
+- kubectl get storageclass
+- kubectl describe storageclass
+
+You see Provisioner mentioned: k8s.io/minikube-hostpath
+Means on the host machine where minikube is provisioned.
+
+On a personal laptop or desktop only option is hard drive
+so this tells the options where pvc can be provosioned.
+
+Object Type:
+Secrets: securely stores a piece of information in the cluster, such as db password.
+Something that you dont want to expose to outside world, but give access to container.
+Use imperative command to create a secret. Its a secret so cannot add to a config yml file and give to k8s.
+    kubectl create secret generic pgpassword --from-literal PGPASSWORD=pgpassword
+    kubectl create <object-type> <type-of-object> <secret-name> --from-literal key=value
+
+    --from-literal means will add info here and not read from a file.
+
+
+Controller: In k8s a Controller is any object that works continously to get the desired state of the object inside the cluster.
+check Image (Controller-k8s, ingress-controller-flow-*, ingress-nginx-specific-rule).
+So in ingress-nginx-specific-rule we see that in this very specific implementation of
+nginx the controller and the `thing` that actually manages the traffic is the same thing.
+It may be different in other nginx implementations.
+
+Check nginx-ingress-google-cloud-setup.png, we see that in Google cloud setup,
+we there is on load balancer service created for us.
+Also there is one addiotnal deployment called default-backend-pod created to run a series of health checks to make
+sure the cluster is running the way it should be. In ideal world this health check should be done using the backend serivce mutli-server. So you should configure it
+in real projects.
+
+Y use nginx-ingress (image: y-use-ngin-xingress)?
+We could have manually also configured nginx like we have done for other projects.
+but the ingress-nginx project already has few extra configurations done.
+Like it will internally route to request to the same multi-client container inside pod directly to preserve sticky session, thereby
+bypassing the clusterIP service completely. So for many such scenarios will use this project.
+Optional reading on Ingress Nginx - https://www.joyfulbikeshedding.com/blog/2018-03-26-studying-the-kubernetes-ingress-system.html
+
+Check nginx-ingress installation steps at
+https://kubernetes.github.io/ingress-nginx/deploy/
+1. Run the first command Docker for Mac (Mandatory command)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud/deploy.yaml
+2. Run the minikube command:
+minikube addons enable ingress
+
+After setting the ingress-nginx and applying it using kubectl apply,
+we can visit our minikube ip and see our app load.
+We do not require the port number 31515 as we are not using the node-port here.
+ingress is listening for traffic on port 80 and 443 for us.
+And browser will by default direct traffic to 80 or 443 depending on https connection in use or not.

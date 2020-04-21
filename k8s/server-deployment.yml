@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      component: server
+  template:
+    metadata:
+      labels:
+        component: server
+    spec:
+      containers:
+        - name: server
+          image: ishantoberoi/multi-server
+          ports:
+            - containerPort: 5000 # express is listening
+          env:
+            - name: REDIS_HOST
+              value: redis-cluster-ip-service
+            - name: REDIS_PORT
+              value: '6379'
+            - name: PGUSER
+              value: postgres
+            - name: PGHOST
+              value: posgtres-cluster-ip-service
+            - name: PGPORT
+              value: '5432' # default, same in postgres-cluster-ip-service
+            - name: PGDATABASE
+              value: postgres # default
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword
+                  key: PGPASSWORD
+
+# we created pgpassword using the imperative command
+# kubectl create secret generic pgpassword --from-literal PGPASSWORD=pgpassword
+# kubectl create <object-type> <type-of-object> <secret-name> --from-literal key=value
+
+# ENV variables should always be Sring.

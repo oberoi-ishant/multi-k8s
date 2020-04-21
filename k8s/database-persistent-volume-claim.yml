@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-persistent-volume-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+# You can also configure the storageClassName (below resources) option to tell
+# kubernetes where to provision the storage on cloud like Azure, Google Cloud
+# etc. For simple laptop or desktop, it will be hard disk, the standard option.
+# - kubectl get storageclass
+# - kubectl describe storageclass
+# You see Provisioner mentioned: k8s.io/minikube-hostpath
+# Means on the host machine where minikube is provisioned.
+
+# later you can check it using
+# kubectl get persistentvolumeclaim
+# kubectl get pvc
+# kubectl get pv
+# pvc is what the requirement was, pv is what is the actual storage volume created.

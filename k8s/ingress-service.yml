@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    kubernetes.io/ingress.class: nginx # means we want to create a ingress service based on the nginx project
+    nginx.ingress.kubernetes.io/rewrite-target: /$1 # configure how the actual copy of nginx behaves.
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+            backend:
+              serviceName: client-cluster-ip-service
+              servicePort: 3000
+          - path: /api/?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+            backend :
+              serviceName: server-cluster-ip-service
+              servicePort: 5000

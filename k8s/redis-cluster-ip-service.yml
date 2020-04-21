@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-ip-service
+  # Since redis deployment is connected to this ClusterIP service
+  # So this name of the service will be the HOST name to connect to redis.
+  # Coz access to redis deployment is through this ClusterIP service.
+spec:
+  type: ClusterIP
+  selector:
+    component: redis
+  ports:
+    - port: 6379
+      targetPort: 6379

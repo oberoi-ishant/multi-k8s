@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: worker
+  template:
+    metadata:
+      labels:
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: ishantoberoi/multi-worker
+          env:
+            - name: REDIS_HOST
+              value: redis-cluster-ip-service
+            - name: REDIS_PORT
+              value: '6379' # default value, same we put in redis_cluster-ip-service.yml
+
+# Image(path-to-production)
+# Since worker is not going to be accessed by any other Object,
+# we do not need any ClusterIP service or any port for worker.
+# We need ClusterIP service only when some other object/service needs
+# to access something inside the pod. Since there is nothing coming
+# in to worked to access anything we don't need ports or ClusterIP.
+# worker is accessing other service/pod (here redis) but none is
+# reaching into worker for anything.
+
+# ENV variables should always be Sring.
