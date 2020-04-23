@@ -1,0 +1,19 @@
+sudo: required
+services:
+  - docker
+before_install:
+  # adding the service-account.json,enc. Dont worry this step is after doing encryption in traivs cli.
+  # check notes-prod-setup.txt
+  - openssl aes-256-cbc -K $encrypted_0c35eebf403c_key -iv $encrypted_0c35eebf403c_iv -in service-account.json.enc -out service-account.json -d
+  #install google cloud sdk
+  - curl https://sdk.cloud.google.com | bash > /dev/null;
+  # go to the default install directory inside google sdk and run the additional command in path.bash.inc
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  # install and update kubectl inside the travis environment
+  - gcloud components update kubectl
+  # authorize with gcloud with our account
+  # activate-service-account similar to the IAM created in AWS
+  # service-account.json to give the credential.
+  # Basically let the travis user have programatic access with gcloud and perform actions.
+  # Image: gen-serivce-account.png
+  - gcloud auth activate-service-account --key-file service-account.json

@@ -1,0 +1,59 @@
+Navigate to console.cloud.google.com
+
+Directions for cleaning up Google Cloud cluster
+https://www.udemy.com/docker-and-kubernetes-the-complete-guide/learn/v4/t/lecture/11684242?start=0
+
+https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/11628212#questions/9889368/
+1. Create account
+2. Create project
+3. From left -> Kubernetes Engine
+4 Create Cluster
+  name: mutli-cluster
+  no of nodes: 3
+  node type: vCPU standard 3.67GB
+  Create.
+
+Check the Image: travis-yml-for-gcp-deployment.png file for steps to up the
+.travis.yml file for production.
+
+Check IMage: gen-serivce-account.png, create-service-account.png for steps to generate a service aacount.
+1. console.cloud.google.com
+2. IAM and Admin
+  Service Account -> Create Service Account
+  account name and id: travis-deployer
+  Role/Permission -> Kubernetes Engine Admin -> Create Key: Json
+  Now the json file is automaticaaly downloaded in your computer.
+  Keep it safe and do not push to it or expose outside.
+
+Install travis CI:
+Link: https://github.com/travis-ci/travis.rb
+Requirement ruby should be installed. In macOS ruby is installed by default.
+So for windows user, either install ruby or install a docker image that has ruby pre-installed
+and then install travis-cli in there.
+Image(travis-install-encrypt.png) for steps both for windows n mac.
+Commands:
+1. docker run -it -v $(pwd):/app ruby:2.3 sh (Get an image with ruby and run shell inside the container)
+2. now if you do cd app/ then ls, you see our project directories client,  server, worker because of volume we setup -v $(pwd):/app
+3. install travis-cli using gem. Gem is dependency manager for ruby language.
+4. gem install travis -v 1.8.10
+5. We did not use the alpine version of ruby as alpine version is bare minimum and we could not use it for our purpose(gem install some packages).
+6. then run: travis and all available travis cli commands will be listed.
+7. travis login (if issue travis login --org or --com)
+8. enter githhub credentials. (if issues first login using travis-ci.com on browser then try again. Travis is miragting from .org to .com so some issue here in accounts.)
+9. copy the downloaded json file from serice account into the current directoy (pwd),
+   as this is the volumewe setup uising -v $(pwd):/app
+10. Rename it to service-account.json, as this is the name we have given in .travis.yml
+11. Verify in container, in app/ this file is now present.
+12. Encrypt file: -r is the repository name on travis-ci. you can go to travis in browser and see the name of repo.
+travis encrypt-file service-account.json -r oberoi-ishant/multi-k8s
+13. Add the output openssl aes-256-cbc -K $encrypted_0c35eebf403c_key -iv $encrypted_0c35eebf403c_iv -in service-account.json.enc -out service-account.json -d to the
+command list in before_install in .travis.yml.
+before_install:
+- openssl aes-256-cbc -K $encrypted_0c35eebf403c_key -iv $encrypted_0c35eebf403c_iv -in service-account.json.enc -out service-account.json -d
+14. Make sure to add service-account.json.enc to the git repository.
+Make sure NOT to add service-account.json to the git repository,
+So you can delete it or copy it somewhere else.
+Commit changes to .travis.yml
+
+
+
