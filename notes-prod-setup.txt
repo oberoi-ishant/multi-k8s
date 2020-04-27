@@ -129,21 +129,22 @@ Image(helm-tiller.png)
 Helm has a lot of options of installation like from brew etc.
 But we do not have brew on our production cluster, so will use the mentioned Script method.
 
+We are using helm 2. There is also a helm 3 version.
 Run this on the google cloud shell
-$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
-$ chmod 700 get_helm.sh
-$ ./get_helm.sh
+- curl -LO https://git.io/get_helm.sh
+- chmod 700 get_helm.sh
+- ./get_helm.sh
 
 Note: helm has a new version 3. This is without Tiller. Here I am following
 the helm 3 approach.
-(https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/17417508#questions/9889368/)
-Image(helm-3-process.png)
 
 RBAC
 In minikube env there is no RBAC enabled hence we were good.
 In Google Cloud RBAC is enabled by default, so Tiller needs some Permission to
 make changes to the cluster running on prod.
-Since helm 3 has no tiller we actually skipped thosed RBAC steps for
+Since helm 3 has no tiller there is differentset of instructions.
+We use helm 2 here, and follow the instructor.
+
 Tiller in the following lectures. Image(helm-3-process.png)
 Image: k8s-security-with-rbac.png
 User Account: identifies a person.
@@ -156,8 +157,11 @@ in a single NAMESPACE.
 kubectl get namespace.
 type of Object.
 
-
 (To be run with helm 2, to grant Permission to tiller in the gcloud shell)
+Helm 2 setup: (gcloud shell)
+- curl -LO https://git.io/get_helm.sh
+- chmod 700 get_helm.sh
+- ./get_helm.sh
 Creating a Service Account:
 - kubectl create serviceaccount --namespace kube-system tiller
   create a serviceaccount with name tiller and add it to the kube-system namespace
@@ -166,6 +170,7 @@ Creating a Service Account:
 - kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
   create a clusterrolebinding and give all cluster permissions using --clusterrole=cluster-admin and add it to the serviceaccount tiller in kube-system namespace using kube-system:tiller
 - helm init --service-account tiller --upgrade
+  (now install nginx-ingress using helm 2)
 - helm install stable/nginx-ingress --name my-nginx --set rbac.create=true
 https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/11628280#questions
 
@@ -188,3 +193,11 @@ access to our 3 NODES on production.
 This load balancer directs traffic to load balancer service (which is k8s type of service)
 and which directs traffic to the nginx-ingress controller which then directs traffic to our
 deployments.
+
+Now Git push all changes and see build trigger and pass in travis ci.
+If success then go to the load balancer IP and you should see app live.
+Also you should see all deployments mentioned in Workloads and Services created on google Cloud console.
+
+
+Now process to make a change to code and push it to production.
+image(workflow-changes-in-production.png)

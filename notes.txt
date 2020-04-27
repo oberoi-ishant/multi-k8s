@@ -1,3 +1,7 @@
+Enitre code for instructor directory: https://github.com/StephenGrider/DockerCasts
+
+
+
 This project relates to simplek8s folder.
 SAME PROJECT(comples_without_k8s) NOW WITH KUBERNETES
 IMAGE(path-to-production)
