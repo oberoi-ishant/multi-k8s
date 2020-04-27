@@ -4,7 +4,7 @@
 # defined by k8s. But by certmanager. So we need to give this
 # apiVersion so that we can reach cert manager defined bucket of
 # objects and then create one of type Certificate.
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
   name: ishantoberoi-com-tls # just to tell i am using for my domainname and add tls to indicate it is tls certificate.

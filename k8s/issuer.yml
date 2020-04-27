@@ -4,7 +4,7 @@
 # defined by k8s. But by certmanager. So we need to give this
 # apiVersion so that we can reach cert manager defined bucket of
 # objects and then create one of type issuer.
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: cert-manager.io/v1alpha2
 kind: ClusterIssuer
 metadata:
   # telling we need to reach out to letsencrypt prod version
@@ -13,9 +13,13 @@ spec:
   acme:
     # url of letsencrypt api which is used to setup all communication link
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: 'oberoiishant@yahoo.com' # not used yet as per requirement from letsencrypt.
+    email: "oberoiishant@yahoo.com" # not used yet as per requirement from letsencrypt.
     privateKeySecretRef:
       name: letsencrypt-prod # a key tied to our recored in letsencrypt. Not related to the certificate secret. It helps in communication with letsencrypt for certificate.
-    http01: {} # we want to use http to react out to letsencrypt for certificate. Other option is DNS.
+    solvers:
+      # we want to use http to react out to letsencrypt for certificate. Other option is DNS.
+      - http01:
+          ingress:
+            class: nginx
 
 
