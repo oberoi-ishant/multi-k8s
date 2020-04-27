@@ -239,6 +239,43 @@ So will create two objects
 1. Issuer - tells cert manager where to get Certificate from.
 2. Certificate - object describing details of the Certificate that should be obtained.
 
+Not commit code and push to master branch. Build pass.
+Then check in your gcloud shell
+kubectl get certficate.
+- ishantoberoi-com-tls should be present.
+Or kubectl describe certficate
+Output: something like:
+Events:
+  Type    Reason        Age   From          Message
+  ----    ------        ----  ----          -------
+  Normal  GeneratedKey  16m   cert-manager  Generated a new private key
+  Normal  Requested     16m   cert-manager  Created new CertificateRequest resource "ishantoberoi-com-tls-2956046638"
+  Normal  Issued        16m   cert-manager  Certificate issued successfully
+
+And secret created using -
+ kubectl get secret / /Configuration tab
+Output
+NAME                                         TYPE                                  DATA   AGE
+ishantoberoi-com                             kubernetes.io/tls                     3      17m
+as specified in certificate.yml
+
+Now when certificate will expire in future, certmanager will attempt the entire
+process of getting new certificate all again.
 
 
-
+Just saving here.
+ingress-service.yml
+Rule section before https config.
+  rules:
+    - http:
+        paths:
+          - path: /?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+            backend:
+              serviceName: client-cluster-ip-service
+              servicePort: 3000
+          - path: /api/?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+            backend :
+              serviceName: server-cluster-ip-service
+              servicePort: 5000
+Make changes in the ingress-service.yml file for https.
+git add, commit and push master.
