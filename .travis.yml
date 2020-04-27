@@ -1,6 +1,13 @@
 sudo: required
 services:
   - docker
+env:
+  global:
+    # Get the git SHA (current commit id) and export as global env variable
+    - SHA=$(git rev-parse HEAD)
+    # make sure gcloud does not return any prompts on running commands like continue (Y|N).
+    # Use exact label for this setting CLOUDSDK_CORE_DISABLE_PROMPTS=1
+    - CLOUDSDK_CORE_DISABLE_PROMPTS=1
 before_install:
   # adding the service-account.json,enc. Dont worry this step is after doing encryption in traivs cli.
   # check notes-prod-setup.txt
@@ -17,3 +24,23 @@ before_install:
   # Basically let the travis user have programatic access with gcloud and perform actions.
   # Image: gen-serivce-account.png
   - gcloud auth activate-service-account --key-file service-account.json
+  # set the project id on gcloud
+  - gcloud config set project multi-k8s-274912 # this is the project ID in google cloud. Image(multi-k8s-id.png)
+  # set the location on gcloud
+  - gcloud config set compute/zone asia-east1-a	 # location of your multi-cluster in google cloud. (Image: gcloud-cluster-location)
+  # set the container name on gcloud
+  - gcloud container clusters get-credentials multi-cluster # name of the cluster on google cloud. (Image: gcloud-cluster-location)
+  # login to docker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  # build image the dev image for tests
+  - docker build -t ishantoberoi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ishantoberoi/react-test npm run test
+
+deploy:
+  provider: script
+  script: bash ./deploy.sh
+  on:
+    branch: master
+

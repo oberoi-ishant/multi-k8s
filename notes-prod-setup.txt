@@ -57,5 +57,134 @@ Make sure NOT to add service-account.json to the git repository,
 So you can delete it or copy it somewhere else.
 Commit changes to .travis.yml
 
+Note travis does not have a built in provider for kubernetes deployment, hence we cannot
+simply add a deploy section and mention provider: elasticbeanstalk like we mentioned in
+aws project. So will write a custom script for deployment.
+So will say provider: script.
+
+# Tag images with latest version
+# Command to update an OBJECT inside the cluster
+# kubectl set <property> <object-type>/<object-name> <container-name>=<new-property>
+
+# Note By default if you do  not specify the version number of image
+# to use, it is consider as lastest. So
+# kubectl set image deployment/server-deployment server=ishantoberoi/multi-server
+# is equal to
+# kubectl set image deployment/server-deployment server=ishantoberoi/multi-server:latest
+# So k8s things it is already running latest version and there is nothing to update.
+# Image (tag-image-latest-issue.png)
+# So will use dynamic tagging of images using git sha.
+# Get current git sha:  git rev-parse HEAD
+# SHA is unique id of commit ~ commit id
+# Image(solve-tag-image-git-sha.png)
+# Image (why-use-tag-latest.png)
+# So we will tag image with two tags:
+# one :latest,so if new engineer clones project and runs kubectl apply -f k8s,
+# he gets all the latest images as :latest tag is implicit in the deployment files
+# their image: ishantoberoi/multi-client means ishantoberoi/multi-client:latest.
+# second: with git sha to push the new image with new commit id to give a unique name, so that k8s can update
+# the deployment.
+# With this approcah we have two benefits,
+# latest image remains updated as latest
+# and codewise we have an image per commit id, so helpful in debugging also
+# We can see what image:commit-id is running on prod, checkout that git commit and debug locally.
+
+# taggging with sha helps get image a new tag so that k8s can update the
+# deployment with new image.
 
 
+GENERATING A SECRET ON GOOGLE CLOUD (for injecting passwords)
+Image(activate-cloud-shell-gcloud.png, gcloud-shell.png)
+1. Activate google cloud shell
+2. Run the commands: as put in travis.yml (Image: gcloud-shell-commands.png) for
+  every new cluster you create. Once per cluster.
+  # set the project id on gcloud
+  - gcloud config set project multi-k8s-274912 # this is the project ID in google cloud. Image(multi-k8s-id.png)
+  # set the location on gcloud
+  - gcloud config set compute/zone asia-east1-a	 # location of your multi-cluster in google cloud. (Image: gcloud-cluster-location)
+  # set the container name on gcloud
+  - gcloud container clusters get-credentials multi-cluster # name of the cluster on google cloud. (Image: gcloud-cluster-location)
+
+  Test now if you are connected to the production cluster on google cloud.
+  Just run simple, kubectl get pods in cloud shell, if it says No resources found, means we are good, Connnected.
+
+  Now create secret on gcloud by running same kubectl command
+  - kubectl create secret generic pgpassword --from-literal PGPASSWORD=pgpassword
+  Make sure secret name(pgpassword) and key(PGPASSWORD) match what is give in deployment files(postgres-deployment, server-deployment).
+  actuall (PGPASSWORD=pgpassword => key=value) value (here pgpassword) can be different from the dev password.
+
+  Now refresh page and in Configuration tab you should see the secret created.
+  Image(verify-secret-created-google-cloud.png)
+
+Install ingress-nginx Using Helm: (https://kubernetes.github.io/ingress-nginx/deploy/#using-helm)
+Helm: (kubernetes-package-manager) a program that helps to administer third party softwares inside of the k8s cluster.
+So we can install some third party softwares inside the k8s cluster using helm.
+Much like brew for mac.
+Link: github.com/helm/helm, https://helm.sh/, https://helm.sh/docs/intro/quickstart/
+Helm combines two softwares - Helm + Tiller
+So we issue command to Helm Client -> Tiller Server.
+Tiller server will be running inside the k8s cluster after installation
+and will help to install softwares. Muck like docker-client + docker-server.
+Image(helm-tiller.png)
+Helm has a lot of options of installation like from brew etc.
+But we do not have brew on our production cluster, so will use the mentioned Script method.
+
+Run this on the google cloud shell
+$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 > get_helm.sh
+$ chmod 700 get_helm.sh
+$ ./get_helm.sh
+
+Note: helm has a new version 3. This is without Tiller. Here I am following
+the helm 3 approach.
+(https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/17417508#questions/9889368/)
+Image(helm-3-process.png)
+
+RBAC
+In minikube env there is no RBAC enabled hence we were good.
+In Google Cloud RBAC is enabled by default, so Tiller needs some Permission to
+make changes to the cluster running on prod.
+Since helm 3 has no tiller we actually skipped thosed RBAC steps for
+Tiller in the following lectures. Image(helm-3-process.png)
+Image: k8s-security-with-rbac.png
+User Account: identifies a person.
+Service Account: identifies a pod.
+They are like authenticating.
+ClusterRoleBinding: Authorizes an account (user/serivce) to do a certain set of actions
+across the ENITRE cluster.
+RoleBinding: Authorizes an account (user/serivce) to do a certain set of actions
+in a single NAMESPACE.
+kubectl get namespace.
+type of Object.
+
+
+(To be run with helm 2, to grant Permission to tiller in the gcloud shell)
+Creating a Service Account:
+- kubectl create serviceaccount --namespace kube-system tiller
+  create a serviceaccount with name tiller and add it to the kube-system namespace
+  so we do not accidently do any changes to the account.
+  check: kubect get namespace for type of namespaces.
+- kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+  create a clusterrolebinding and give all cluster permissions using --clusterrole=cluster-admin and add it to the serviceaccount tiller in kube-system namespace using kube-system:tiller
+- helm init --service-account tiller --upgrade
+- helm install stable/nginx-ingress --name my-nginx --set rbac.create=true
+https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/11628280#questions
+
+Now in the Workloads we should see
+1. my-nginx-nginx-ingress-controller
+2. my-nginx-nginx-ingress-default-backend
+
+And in Services and Ingress
+1. my-nginx-nginx-ingress-controller (Load balancer)
+2. my-nginx-nginx-ingress-default-backend (ClusterIP for backend)
+Note: We should see two endpoints in my-nginx-nginx-ingress-controller,
+one for ports 80 and one for port 443. If you check this IP on browseryou see a default
+404 page. This is also provided by default-backend created, along with some health check.
+
+Also in Network Service -> Load Balancing -> you should see the load balancer
+created as shown in Image(load-balancer-details, load-balancer-gcloud).
+This is the load balancer shown in prod setup Image nginx-ingress-google-cloud-setup.png
+So this is having the same IP we saw above in endpoint and is governing
+access to our 3 NODES on production.
+This load balancer directs traffic to load balancer service (which is k8s type of service)
+and which directs traffic to the nginx-ingress controller which then directs traffic to our
+deployments.
