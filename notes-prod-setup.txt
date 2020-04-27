@@ -195,9 +195,50 @@ and which directs traffic to the nginx-ingress controller which then directs tra
 deployments.
 
 Now Git push all changes and see build trigger and pass in travis ci.
-If success then go to the load balancer IP and you should see app live.
+If success then go to the load balancer IP and you should see APP LIVE.
 Also you should see all deployments mentioned in Workloads and Services created on google Cloud console.
 
 
 Now process to make a change to code and push it to production.
 image(workflow-changes-in-production.png)
+
+
+Setting up https on k8s
+Image(https-k8s-overview.png)
+1. Get a domain.
+  In Domain settings DNS
+  Add/Edit (In godaddy DNS i did it)
+  Type A account to point to the load balancer IP endpoint
+  Add a record for www and point to your domain name ishantoberoi.com
+
+2.Project used https://github.com/jetstack/cert-manager
+Follow instructions here to install cert manager using Helm 2
+https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/learn/lecture/16924480#questions
+Run command in gcloud shell.
+1.Apply the yml file
+kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml
+2. Create the namespace for cert-manager
+kubectl create namespace cert-manager
+3. Add the Jetstack Helm repository
+helm repo add jetstack https://charts.jetstack.io
+4. Update your local Helm chart repository cache
+helm repo update
+5. Install the cert-manager Helm chart:
+helm install \
+  --name cert-manager \
+  --namespace cert-manager \
+  --version v0.11.0 \
+  jetstack/cert-manager
+
+Verify by running kubectl get pods --namespace cert-manager.
+You should see the cert-manager, cert-manager-cainjector, and cert-manager-webhook pod in a Running state.
+
+We are using service called https://letsencrypt.org/ to get the Certificate.
+Now steps to wire cert manager (Image: wire-cert-manager.png)
+So will create two objects
+1. Issuer - tells cert manager where to get Certificate from.
+2. Certificate - object describing details of the Certificate that should be obtained.
+
+
+
+

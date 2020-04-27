@@ -1,0 +1,33 @@
+# Only used to configure https in production setup.
+# We are using https://letsencrypt.org/ for certificate.
+# We are giving this apiVersion as this is not an object
+# defined by k8s. But by certmanager. So we need to give this
+# apiVersion so that we can reach cert manager defined bucket of
+# objects and then create one of type Certificate.
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: ishantoberoi-com-tls # just to tell i am using for my domainname and add tls to indicate it is tls certificate.
+spec:
+  # tells where to store the secret once we recieve the certificate. This secret will be created
+  # by certmanager for us automatically. Image: wire-cert-manager.png
+  secretName: ishantoberoi-com
+  issuerRef:
+    # name of our issuer
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: ishantoberoi.com # domain name
+  dnsNames:
+    # list of addresses out certificate is going to cover.
+    - ishantoberoi.com
+    - www.ishantoberoi.com
+  acme:
+    config:
+      - http01:
+          ingressClass: nginx
+        domains:
+          # domain names where the verification process b/w letsencrypt and k8s will take place
+          # to make sure we have access to both the domains (Image: https-k8s-overview.png)
+          - ishantoberoi.com
+          - www.ishantoberoi.com
+
