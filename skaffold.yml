@@ -1,0 +1,44 @@
+# https://skaffold.dev/docs/references/yaml/
+apiVersion: skaffold/v1beta2
+kind: Config
+build:
+  local:
+    push: false # by default skaffold will try to push the images to docker hub or your default docker repository
+  artifacts:
+    - image: ishantoberoi/multi-client
+      context: client # client folder
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        '**/*.js': . # means, any change in js files, update the running pod/container with the changes.
+        '**/*.css': .
+        '**/*.html': .
+      # if we make any change in files other than specified above,
+      # skaffold fallback to mode 1 ie. build entire image from scratch.
+    - image: ishantoberoi/multi-server
+      context: server
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        '**/*.js': . # we have nodemon running in npm run dev, hence changes to js will be auto picked up.
+    - image: ishantoberoi/multi-worker
+      context: worker
+      docker:
+        dockerfile: Dockerfile.dev
+      sync:
+        '**/*.js': . # we have nodemon running in npm run dev, hence changes to js will be auto picked up.
+deploy:
+  kubectl:
+    manifests:
+      - k8s/client-deployment.yml
+      - k8s/server-deployment.yml
+      - k8s/worker-deployment.yml
+      - k8s/client-cluster-ip-service.yml
+      - k8s/server-cluster-ip-service.yml
+      # we are saying we want skaffold to manager all the above deployments
+      # So running skaffold dev in terminal will start these pods and hitting ctrl + c, exiting
+      # will delete these pods.
+      # Make sure we do not add stateful deployments here, like postgress that might have
+      # some persistent data, deleting it will wipe off the data.
+      # now when ypu exit skaffold dev, you will see all above pods being deleted.
+      # you can verify by kubectl get pods. Only the ones not listed above are running.

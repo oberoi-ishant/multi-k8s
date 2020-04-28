@@ -36,6 +36,7 @@ class Fib extends Component {
 
   renderSeenIndexes() {
     if (Array.isArray(this.state.seenIndexes)) {
+      console.log(this.state.seenIndexes);
       return this.state.seenIndexes.map(({ number }) => number).join(', ');
     } else {
       return 'No indexes';

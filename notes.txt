@@ -97,7 +97,7 @@ ingress is listening for traffic on port 80 and 443 for us.
 And browser will by default direct traffic to 80 or 443 depending on https connection in use or not.
 
 For local development, just make the changes in ingress-service.yml and apply k8s using kubectl apply -f k8s.
-Ignore the warning for issuer and certificate.ymlunable to recognize "k8s/certificate.yml": no matches for kind "Certificate" in version "cert-manager.io/v1alpha2"
+Ignore the warning for issuer and certificate.yml unable to recognize "k8s/certificate.yml": no matches for kind "Certificate" in version "cert-manager.io/v1alpha2"
 unable to recognize "k8s/issuer.yml": no matches for kind "ClusterIssuer" in version "cert-manager.io/v1alpha2
 Launch minikube IP and app should load.
 
@@ -105,7 +105,27 @@ Launch minikube IP and app should load.
 
 
 
+You can also run development using https://skaffold.dev/. Image(local-dev-scaffold.png)
+This helps to kind of auto update the pods with latest changes to the source code.
+So first install it  brew install skaffold or from https://skaffold.dev/docs/install/
+NOTE in k8s world we are using deployments that are using the images pushed
+to docker hub. So for development we cannot afford to make changes and push images
+every time and then test the code. So will use skaffold to actually
+use the Dockerfile.dev to make local changes and test out the app locally
+without pushing images to docker hub everytime.
 
+skaffold modes:
+Lets say we are working on client image.
+1. rebuild client image from scratch.
+2. inject updated file sinto the client pod rely on the react app to update automatically.
+We can do this auto update(2) if we have things like nodenom or webpack watch configured.
+3. create skaffold.yml
+4. run: skaffold dev ... you should see react app now on minikube IP.
+On making a change it should reflect locally.
+Note you might see things like, react app running on localhost:3000/ in console 3 times.
+This is  because we asked for three replicas in client-deployment. So three instances of app running.
+If you see error like Error: could not stabilize within 2m0s: context deadline exceeded
+run: skaffold dev again.
 
 PREVIOUS NOTE: JUST to save added here.
 CONFIGURE DOCKER CLIENT TO TALK TO DOCKER SERVER INSIDE THE VM (Image: configure-docker-client-vm, eval-docker-vm)

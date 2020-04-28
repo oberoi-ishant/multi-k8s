@@ -10,7 +10,7 @@ metadata:
     # force all traffic to redirect to https
     # no traffic should be allowed on http as it is not secure
     # reconfigure nginx as ask all traffic through https
-    nginx.ingress.kubernetes.io/ssl-redirect: 'true' # DISABLE FOR DEVELOPMENT
+    # nginx.ingress.kubernetes.io/ssl-redirect: 'true' # DISABLE FOR DEVELOPMENT
 spec:
   tls:
     # so we say we want to allow https traffic from the domains mentioned
@@ -21,8 +21,7 @@ spec:
         - www.ishantoberoi.com
       secretName: ishantoberoi-com # secretName in Certificate.yml
   rules:
-    - host: ishantoberoi.com
-      http:
+    - http:
         paths:
           - path: /?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
             backend:
@@ -32,19 +31,31 @@ spec:
             backend :
               serviceName: server-cluster-ip-service
               servicePort: 5000
-    # ishantoberoi.com and www.ishantoberoi.com are treated as two different hosts.
-    # This is how ingress-nginx is written.
-    - host: www.ishantoberoi.com
-      http:
-        paths:
-          - path: /?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
-            backend:
-              serviceName: client-cluster-ip-service
-              servicePort: 3000
-          - path: /api/?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
-            backend :
-              serviceName: server-cluster-ip-service
-              servicePort: 5000
+    # For production, https setup under rules
+    # - host: ishantoberoi.com
+    #   http:
+    #     paths:
+    #       - path: /?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+    #         backend:
+    #           serviceName: client-cluster-ip-service
+    #           servicePort: 3000
+    #       - path: /api/?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+    #         backend :
+    #           serviceName: server-cluster-ip-service
+    #           servicePort: 5000
+    # # ishantoberoi.com and www.ishantoberoi.com are treated as two different hosts.
+    # # This is how ingress-nginx is written.
+    # - host: www.ishantoberoi.com
+    #   http:
+    #     paths:
+    #       - path: /?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+    #         backend:
+    #           serviceName: client-cluster-ip-service
+    #           servicePort: 3000
+    #       - path: /api/?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
+    #         backend :
+    #           serviceName: server-cluster-ip-service
+    #           servicePort: 5000
 
 
 
