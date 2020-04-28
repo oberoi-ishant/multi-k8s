@@ -262,20 +262,14 @@ as specified in certificate.yml
 Now when certificate will expire in future, certmanager will attempt the entire
 process of getting new certificate all again.
 
-
-Just saving here.
-ingress-service.yml
-Rule section before https config.
-  rules:
-    - http:
-        paths:
-          - path: /?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
-            backend:
-              serviceName: client-cluster-ip-service
-              servicePort: 3000
-          - path: /api/?(.*) # this will help us save from the error we had see in past this.seenIndexes.map is not a function.
-            backend :
-              serviceName: server-cluster-ip-service
-              servicePort: 5000
 Make changes in the ingress-service.yml file for https.
 git add, commit and push master.
+
+Now is Servies and Ingress tab, you can see ingress-service showing urls of the application
+Image(https-urls-ingress-service, https-ishantoberoi-com). Visit the url to see app running over HTTPS.
+Check with www.ishantoberoi.com and ishantoberoi.com.
+Try using http://ishantoberoi.com, it should redirect to https://ishantoberoi.com
+
+
+CLEANUP:
+Under IAM 7 Admin --> shutdown.

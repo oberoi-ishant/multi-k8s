@@ -95,3 +95,27 @@ we can visit our minikube ip and see our app load.
 We do not require the port number 31515 as we are not using the node-port here.
 ingress is listening for traffic on port 80 and 443 for us.
 And browser will by default direct traffic to 80 or 443 depending on https connection in use or not.
+
+For local development, just make the changes in ingress-service.yml and apply k8s using kubectl apply -f k8s.
+Ignore the warning for issuer and certificate.ymlunable to recognize "k8s/certificate.yml": no matches for kind "Certificate" in version "cert-manager.io/v1alpha2"
+unable to recognize "k8s/issuer.yml": no matches for kind "ClusterIssuer" in version "cert-manager.io/v1alpha2
+Launch minikube IP and app should load.
+
+
+
+
+
+
+
+PREVIOUS NOTE: JUST to save added here.
+CONFIGURE DOCKER CLIENT TO TALK TO DOCKER SERVER INSIDE THE VM (Image: configure-docker-client-vm, eval-docker-vm)
+  - eval $(minikube docker-env)
+Now the docker client on your machine will talk to docker server inside the vm.
+This is temporary. ONLY FOR THAT TERMINAL WINDOW WHERE YOU RUN THE EVAL COMMAND.
+You can also just run: minikube docker-env
+This show the environement variables expose by minikube.
+  - You should see some Output like:
+  export DOCKER_TLS_VERIFY="1"
+  export DOCKER_HOST="tcp://192.168.64.2:2376"
+  export DOCKER_CERT_PATH="/Users/ishant.oberoi/.minikube/certs"
+  export MINIKUBE_ACTIVE_DOCKERD="minikube"
